@@ -1,4 +1,4 @@
-pragma solidity 0.4.20;
+pragma solidity ^0.4.20;
 
 contract Election {
     // Model a Candidate
@@ -7,6 +7,8 @@ contract Election {
         string name;
         uint voteCount;
     }
+
+    mapping(address => bool) public members;
 
     // Store accounts that have voted
     mapping(address => bool) public voters;
@@ -20,6 +22,9 @@ contract Election {
     event votedEvent (
         uint indexed _candidateId
     );
+
+    // signUp event
+    event signUpEvent ();
 
     function Election () public {
         addCandidate("Candidate 1");
@@ -46,5 +51,11 @@ contract Election {
 
         // trigger voted event
         votedEvent(_candidateId);
+    }
+
+    function signUp() public {
+        require(!members[msg.sender]);
+        members[msg.sender] = true;
+        signUpEvent();
     }
 }

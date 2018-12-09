@@ -21,12 +21,34 @@
     <div class="container" style="width: 650px;">
       <div class="row">
         <div class="col-lg-12">
-          <h1 class="text-center">Election Results</h1>
+          <h1 class="text-center">Application</h1>
           <hr/>
           <br/>
           <div id="loader">
             <p class="text-center">Loading...</p>
           </div>
+          
+          <div id="signUpForm" class="text-center">
+            <form onSubmit="App.signUpClick(); return false;">
+              <button type="submit" class="btn btn-primary">Sign Up</button>
+              <hr />
+            </form>
+          </div>
+
+          <div id="loginForm" class="text-center">
+            <form onSubmit="App.loginClick(); return false;">
+              <button type="submit" class="btn btn-primary">Login</button>
+              <hr />
+            </form>
+          </div>
+
+          <div id="logoutForm" class="text-center">
+            <form onSubmit="App.logoutClick(); return false;">
+              <button type="submit" class="btn btn-primary">Logout</button>
+              <hr />
+            </form>
+          </div>
+
           <div id="content" style="display: none;">
             <table class="table">
               <thead>
@@ -49,7 +71,8 @@
               <button type="submit" class="btn btn-primary">Vote</button>
               <hr />
             </form>
-            <p id="accountAddress" class="text-center"></p>
+            <p id="accountAddress" class="text-center"></p> <br>
+            <p id="signedMessage" class="text-center">aaaaa</p> <br>
           </div>
         </div>
       </div>

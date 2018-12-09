@@ -3,6 +3,7 @@ App = {
   contracts: {},
   account: '0x0',
   hasVoted: false,
+  hasLoggedIn: false,
 
   init: function() {
     return App.initWeb3();
@@ -49,6 +50,15 @@ App = {
         // Reload when a new vote is recorded
         App.render();
       });
+
+      instance.signUpEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("event triggered", event)
+        // Reload when a new vote is recorded
+        App.render();
+      });      
     });
   },
 
@@ -65,13 +75,77 @@ App = {
       if (err === null) {
         App.account = account;
         $("#accountAddress").html("Your Account: " + account);
+
+      
+        // async function startSign(account){
+        //   var message = "Some string";
+        //   var hash = web3.sha3(message);
+        //   let signatureee="asdsasd";
+        //   console.log("a1 " + signatureee);
+        //   signatureee = await window.web3.personal.sign(hash, account, (err, res) => {
+        //     console.log("Error:" + err);
+        //     console.log("Res:" + res);
+        //     $("#signedMessage").html(res);
+        //     signatureee = res;
+        //   });
+        //   console.log("a1 " + signatureee);
+        //   return signatureee;
+        // }
+        // startSign(account).then(function(signed){
+        //   //console.log("a2 " + signature);
+        //   console.log("aa " + signed);
+
+        //   $("#signedMessage").html(signed);
+        // });
+
+
+        // async function startRecover(account){
+        //   var message = "Some string";
+        //   var hash = web3.sha3(message);
+        //   let signature = "0xc36eccb82196fb437ead4a9b889bb260a6fc79451ebd19a1f21086849f7a2341343c198be65affcd4dd00c71cf57f128448a3149e45944af9aa799e962de03e11b";
+        //   console.log("a1 " + signature);
+        //   var signing_address;
+        //   var signi = await web3.personal.ecRecover(hash, signature, (err, res) => {
+        //     signing_address = res;
+        //     console.log("adress " + signing_address);
+        //   });
+        //   console.log("a1 " + signing_address);
+        //   return signing_address;
+        // }
+        // startRecover(account).then(function(signed){
+        //   //console.log("a2 " + signature);
+        //   console.log("aa " + signed);
+
+        //   $("#signedMessage").html(signed);
+        // });
+
+
       }
-    });
+    });    
 
     // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
       electionInstance = instance;
-      return electionInstance.candidatesCount();
+      return electionInstance.members(App.account);
+    }).then(function(hasSignedUp){
+      loader.hide();
+      if(hasSignedUp){
+        $("#signUpForm").hide();
+        if(App.hasLoggedIn){
+          $("#loginForm").hide();
+          $("#logoutForm").show();
+          content.show();
+        } else {
+          $("#loginForm").show();
+          $("#logoutForm").hide();
+        }
+      } else {
+        $("#signUpForm").show();
+        $("#loginForm").hide();
+        $("#logoutForm").hide();
+        content.hide();
+      }
+      return electionInstance.candidatesCount();      
     }).then(function(candidatesCount) {
       var candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
@@ -100,8 +174,8 @@ App = {
       if(hasVoted) {
         $('form').hide();
       }
-      loader.hide();
-      content.show();
+      //loader.hide();
+      //content.show();
     }).catch(function(error) {
       console.warn(error);
     });
@@ -118,7 +192,44 @@ App = {
     }).catch(function(err) {
       console.error(err);
     });
-  }
+  },
+
+  signUpClick: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      return instance.signUp({ from: App.account });
+    }).then(function(result) {
+      // Wait for votes to update
+      $("#content").hide();
+      $("#loader").show();
+    }).catch(function(err) {
+      console.error(err);
+    });
+  },
+
+  loginClick: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      console.log("clicked to the login");
+      //electionInstance.members(App.account);
+      return instance.members(App.account);
+    }).then(function(result) {
+      console.log(result);
+      App.hasLoggedIn = result;
+      // Wait for votes to update
+      $("#content").hide();
+      $("#loader").show();
+      App.render();
+
+    }).catch(function(err) {
+      //console.error(err);
+      console.log("error");
+    });
+  },
+
+  logoutClick: function() {
+    App.hasLoggedIn = false;
+    App.render();
+  },
+
 };
 
 $(function() {
