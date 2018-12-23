@@ -24,16 +24,29 @@ App = {
   },
 
   initContract: function() {
-    $.getJSON("Election.json", function(election) {
+    $.getJSON("Members.json", function(members) {
       // Instantiate a new truffle contract from the artifact
-      App.contracts.Election = TruffleContract(election);
+      App.contracts.Members = TruffleContract(members);
       // Connect provider to interact with contract
-      App.contracts.Election.setProvider(App.web3Provider);
+      App.contracts.Members.setProvider(App.web3Provider);
 
-      App.listenForEvents();
+      App.listenForEventsMembers();
 
-      return App.render();
+      //return App.render();
+    }).then(function(){
+        $.getJSON("Election.json", function(election) {
+        // Instantiate a new truffle contract from the artifact
+        App.contracts.Election = TruffleContract(election);
+        // Connect provider to interact with contract
+        App.contracts.Election.setProvider(App.web3Provider);
+
+        App.listenForEvents();
+
+        return App.render();
+      });
     });
+
+    
   },
 
   // Listen for events emitted from the contract
@@ -49,21 +62,83 @@ App = {
         console.log("event triggered", event)
         // Reload when a new vote is recorded
         App.render();
-      });
+      });          
+    });
+  },
 
-      instance.signUpEvent({}, {
+  listenForEventsMembers: function(){
+    App.contracts.Members.deployed().then(function(membersInstance){
+      membersInstance.signUpEvent({}, {
         fromBlock: 0,
         toBlock: 'latest'
       }).watch(function(error, event) {
         console.log("event triggered", event)
         // Reload when a new vote is recorded
         App.render();
-      });      
+      });  
+    });
+  },
+
+  loadElectionResults: function(){
+    console.log("loadElectionResults is called");
+    var electionInstance, membersInstance;
+    var loader = $("#loader");
+    var content = $("#content");
+
+    loader.show();
+    content.hide();
+
+        // Load account data
+    web3.eth.getCoinbase(function(err, account) {
+      if (err === null) {
+        App.account = account;
+        $("#accountAddress").html("Your Account: " + account);
+      }
+    });
+
+// Load contract data
+    App.contracts.Election.deployed().then(function(instance) {
+      electionInstance = instance;
+      return electionInstance.candidatesCount();
+    }).then(function(candidatesCount) {
+      var candidatesResults = $("#candidatesResults");
+      candidatesResults.empty();
+
+      var candidatesSelect = $('#candidatesSelect');
+      candidatesSelect.empty();
+
+      for (var i = 1; i <= candidatesCount; i++) {
+        console.log(i);
+        electionInstance.candidates(i).then(function(candidate) {
+          var id = candidate[0];
+          var name = candidate[1];
+          var voteCount = candidate[2];
+
+          // Render candidate Result
+          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
+          candidatesResults.append(candidateTemplate);
+
+          // Render candidate ballot option
+          var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
+          candidatesSelect.append(candidateOption);
+        });
+      }
+      return electionInstance.voters(App.account);
+    }).then(function(hasVoted) {
+      // Do not allow a user to vote
+      if(hasVoted) {
+        $("#voteForm").hide();
+      }
+      loader.hide();
+      //content.show();
+    }).catch(function(error) {
+      console.warn(error);
     });
   },
 
   render: function() {
-    var electionInstance;
+    console.log("render is called");
+    var membersInstance;
     var loader = $("#loader");
     var content = $("#content");
 
@@ -123,17 +198,17 @@ App = {
       }
     });    
 
-    // Load contract data
-    App.contracts.Election.deployed().then(function(instance) {
-      electionInstance = instance;
-      return electionInstance.members(App.account);
+    App.contracts.Members.deployed().then(function(instance){
+      membersInstance = instance;
+      return membersInstance.members(App.account);
     }).then(function(hasSignedUp){
       loader.hide();
       if(hasSignedUp){
         $("#signUpForm").hide();
         if(App.hasLoggedIn){
           $("#loginForm").hide();
-          $("#logoutForm").show();
+          $("#logoutForm").show();          
+          App.loadElectionResults();
           content.show();
         } else {
           $("#loginForm").show();
@@ -145,41 +220,9 @@ App = {
         $("#logoutForm").hide();
         content.hide();
       }
-      return electionInstance.candidatesCount();      
-    }).then(function(candidatesCount) {
-      var candidatesResults = $("#candidatesResults");
-      candidatesResults.empty();
-
-      var candidatesSelect = $('#candidatesSelect');
-      candidatesSelect.empty();
-
-      for (var i = 1; i <= candidatesCount; i++) {
-        electionInstance.candidates(i).then(function(candidate) {
-          var id = candidate[0];
-          var name = candidate[1];
-          var voteCount = candidate[2];
-
-          // Render candidate Result
-          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
-          candidatesResults.append(candidateTemplate);
-
-          // Render candidate ballot option
-          var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
-          candidatesSelect.append(candidateOption);
-        });
-      }
-      return electionInstance.voters(App.account);
-    }).then(function(hasVoted) {
-      // Do not allow a user to vote
-      if(hasVoted) {
-        $('form').hide();
-      }
-      //loader.hide();
-      //content.show();
-    }).catch(function(error) {
-      console.warn(error);
     });
-  },
+
+    },
 
   castVote: function() {
     var candidateId = $('#candidatesSelect').val();
@@ -195,10 +238,10 @@ App = {
   },
 
   signUpClick: function() {
-    App.contracts.Election.deployed().then(function(instance) {
+    App.contracts.Members.deployed().then(function(instance) {
       return instance.signUp({ from: App.account });
     }).then(function(result) {
-      // Wait for votes to update
+      
       $("#content").hide();
       $("#loader").show();
     }).catch(function(err) {
@@ -207,25 +250,24 @@ App = {
   },
 
   loginClick: function() {
-    App.contracts.Election.deployed().then(function(instance) {
+    App.contracts.Members.deployed().then(function(instance) {
       console.log("clicked to the login");
-      //electionInstance.members(App.account);
       return instance.members(App.account);
     }).then(function(result) {
       console.log(result);
       App.hasLoggedIn = result;
-      // Wait for votes to update
+
       $("#content").hide();
       $("#loader").show();
       App.render();
 
     }).catch(function(err) {
-      //console.error(err);
-      console.log("error");
+      console.error(err);
     });
   },
 
   logoutClick: function() {
+    console.log("clicked to the logout");
     App.hasLoggedIn = false;
     App.render();
   },

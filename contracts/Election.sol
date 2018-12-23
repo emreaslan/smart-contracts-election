@@ -8,8 +8,6 @@ contract Election {
         uint voteCount;
     }
 
-    mapping(address => bool) public members;
-
     // Store accounts that have voted
     mapping(address => bool) public voters;
     // Store Candidates
@@ -53,9 +51,4 @@ contract Election {
         votedEvent(_candidateId);
     }
 
-    function signUp() public {
-        require(!members[msg.sender]);
-        members[msg.sender] = true;
-        signUpEvent();
-    }
 }
