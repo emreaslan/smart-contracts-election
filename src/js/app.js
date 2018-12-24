@@ -219,8 +219,10 @@ App = {
       account = App.account;
       console.log("inside account " + account);
 
-      async function startRecover(account, signature){
-        var message = "Some string";
+      let message = (0|Math.random()*9e6).toString(36);
+
+      async function startRecover(message, account, signature){
+        console.log("message " + message);
         var hash = web3.sha3(message);
         await web3.personal.ecRecover(hash, signature, (err, res) => {
           if (res === App.account){
@@ -231,20 +233,19 @@ App = {
         });
       }
 
-      async function startSign(account){
-        var message = "Some string";
+      async function startSign(message, account){
         var hash = web3.sha3(message);
-        let signature = "asdsasd";
         console.log("account " + account);
+        console.log("message " + message);
 
         await window.web3.personal.sign(hash, account, async (err, res) => {
           console.log("Error:" + err);
           console.log("Res:" + res);
-          await startRecover(App.account, res);
+          await startRecover(message, App.account, res);
         });
       }      
 
-      await startSign(account);
+      await startSign(message, account);
       
     }).catch(function(err) {
       console.error(err);
