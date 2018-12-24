@@ -4,6 +4,8 @@ App = {
   account: '0x0',
   hasVoted: false,
   hasLoggedIn: false,
+  signedData: "",
+  signedAddress: "0",
 
   init: function() {
     return App.initWeb3();
@@ -156,6 +158,7 @@ App = {
         //   var message = "Some string";
         //   var hash = web3.sha3(message);
         //   let signatureee="asdsasd";
+        //   console.log("account " + account);
         //   console.log("a1 " + signatureee);
         //   signatureee = await window.web3.personal.sign(hash, account, (err, res) => {
         //     console.log("Error:" + err);
@@ -241,7 +244,9 @@ App = {
     App.contracts.Members.deployed().then(function(instance) {
       return instance.signUp({ from: App.account });
     }).then(function(result) {
-      
+
+                  
+
       $("#content").hide();
       $("#loader").show();
     }).catch(function(err) {
@@ -249,17 +254,75 @@ App = {
     });
   },
 
-  loginClick: function() {
+  loginClick: async function() {
     App.contracts.Members.deployed().then(function(instance) {
       console.log("clicked to the login");
       return instance.members(App.account);
-    }).then(function(result) {
-      console.log(result);
+    }).then( async function(result) {
+      //console.log(result);
       App.hasLoggedIn = result;
 
-      $("#content").hide();
-      $("#loader").show();
-      App.render();
+      account = App.account;
+      console.log("inside account " + account);
+
+      async function startRecover(account, signature){
+        var message = "Some string";
+        var hash = web3.sha3(message);
+        await web3.personal.ecRecover(hash, signature, (err, res) => {
+          if (res === App.account){
+            $("#content").hide();
+            $("#loader").show();
+            App.render();
+          }
+        });
+      }
+
+      async function startSign(account){
+        var message = "Some string";
+        var hash = web3.sha3(message);
+        let signature = "asdsasd";
+        console.log("account " + account);
+
+        await window.web3.personal.sign(hash, account, async (err, res) => {
+          console.log("Error:" + err);
+          console.log("Res:" + res);
+          await startRecover(App.account, res);
+        });
+      }      
+
+      await startSign(account);
+      
+      
+      /*
+      console.log("account " + account);
+      sAddress = await startRecover(account, sData);
+      console.log("sAddress " + sAddress);
+      */
+
+      /*
+
+      startSign(account).then(function(signed){
+        App.signedData = signed;
+        console.log("signed startSign: " + signed);
+        return signed;
+      }).then(function(signed){
+        console.log("account 00: " + App.account);
+        console.log("signed 01: " + App.signedData);
+
+        startRecover(App.account, signed).then(function(signingAddress){
+          console.log("signedData: " + App.signedData);
+          console.log("signedAddress: " + App.signedAddress);
+          console.log("Account: " + App.account);
+
+          if (App.account === App.signedAddress)
+          {
+            $("#content").hide();
+            $("#loader").show();
+            App.render();
+          }
+        });
+      });
+      */
 
     }).catch(function(err) {
       console.error(err);
