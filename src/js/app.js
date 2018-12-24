@@ -150,51 +150,6 @@ App = {
       if (err === null) {
         App.account = account;
         $("#accountAddress").html("Your Account: " + account);
-
-      
-        // async function startSign(account){
-        //   var message = "Some string";
-        //   var hash = web3.sha3(message);
-        //   let signatureee="asdsasd";
-        //   console.log("a1 " + signatureee);
-        //   signatureee = await window.web3.personal.sign(hash, account, (err, res) => {
-        //     console.log("Error:" + err);
-        //     console.log("Res:" + res);
-        //     $("#signedMessage").html(res);
-        //     signatureee = res;
-        //   });
-        //   console.log("a1 " + signatureee);
-        //   return signatureee;
-        // }
-        // startSign(account).then(function(signed){
-        //   //console.log("a2 " + signature);
-        //   console.log("aa " + signed);
-
-        //   $("#signedMessage").html(signed);
-        // });
-
-
-        // async function startRecover(account){
-        //   var message = "Some string";
-        //   var hash = web3.sha3(message);
-        //   let signature = "0xc36eccb82196fb437ead4a9b889bb260a6fc79451ebd19a1f21086849f7a2341343c198be65affcd4dd00c71cf57f128448a3149e45944af9aa799e962de03e11b";
-        //   console.log("a1 " + signature);
-        //   var signing_address;
-        //   var signi = await web3.personal.ecRecover(hash, signature, (err, res) => {
-        //     signing_address = res;
-        //     console.log("adress " + signing_address);
-        //   });
-        //   console.log("a1 " + signing_address);
-        //   return signing_address;
-        // }
-        // startRecover(account).then(function(signed){
-        //   //console.log("a2 " + signature);
-        //   console.log("aa " + signed);
-
-        //   $("#signedMessage").html(signed);
-        // });
-
-
       }
     });    
 
